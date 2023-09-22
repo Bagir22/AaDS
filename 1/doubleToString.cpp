@@ -3,14 +3,6 @@
 
 using namespace std;
 
-/*
-Составить программу перевода вещественного числа в форму
-константы с плавающей  точкой  в строковом формате. Целая часть
-мантиссы должна состоять из одной цифры в диапазоне  от 1 до 9.
-Исходное число имеет тип double, а преобразуется к типу string.
-Число знаков после десятичной точки задается (8).
-*/
-
 string intToString(int i) {
     switch(i) {
         case 0:
@@ -53,20 +45,28 @@ int getNum(double *num, double *precision)
     return steps;
 }
 
-int getWholePart(double *num) {
-    while(*num > 10) {
+int getWholePart(double *num, int *eCount, int *zeroes) {
+    while(*num >= 10) {
         *num = *num / 10;
+        *eCount = *eCount + 1;
     }
 
     int steps = 0;
-    while(*num > 1) {
+    while(*num >= 1) {
         steps++;
-        *num = *num -1;
+        *num = *num - 1;
     }
+
+    if (*eCount % 10 == 0) {
+        *zeroes *= 10;
+    } 
 
     return steps;
 }
 
+int getDigit(int *num, int *precision) {
+    return *num / *precision;
+}
 
 int main()
 {
@@ -102,14 +102,56 @@ int main()
         result += "-";
     }
 
-    int wholePart = getWholePart(&num);
+    int eCount = 0;
+    int zeroes = 1;
+
+    int wholePart = getWholePart(&num, &eCount, &zeroes);
     result += intToString(wholePart);
     result += ".";
+
+    double precision = 0.1;
+    
+    while (count != 0) {
+        int digit = getNum(&num, &precision);
+        result += intToString(digit);
+        precision = precision * 0.1;
+        count--;
+        eCount++;
+        if (eCount % 10 == 0) {
+            zeroes *= 10;
+        } 
+    }
+
+    while (num > 0 && num >= precision) {
+        int digit = getNum(&num, &precision);
+
+        precision = precision * 0.1;
+        eCount++;
+
+        if (eCount % 10 == 0) {
+            zeroes *= 10;
+        } 
+    }
+
+    result += "e+";
+
+    if (eCount < 10) {
+        result += intToString(eCount);
+    } else {
+        while (eCount > 0) {
+            if (eCount < 10) {
+                result += intToString(eCount);
+                break;
+            } else {
+                int digit = getDigit(&eCount, &zeroes);
+                eCount /= 10;
+                zeroes /= 10;
+                result += intToString(digit);
+            }
+        }
+    }
 
     cout << "Результат: ";    
     cout << result;
     cout << "\n";
 }
-
-
-
