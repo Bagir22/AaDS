@@ -1,5 +1,4 @@
 #include <iostream>
-#include <sstream> 
 #include <unistd.h>
 #include <iomanip> 
 
@@ -40,6 +39,40 @@ string intToString(int i) {
     }
 }
 
+string eString(int eCount) {
+    if (eCount <= 9) {
+        return intToString(eCount);
+    }
+
+    string result = "";
+    int len = 0;
+    while (eCount > 0) {
+        int digit = eCount % 10;
+        string digitStr = intToString(digit);
+        eCount /= 10;
+        len++;
+        result += digitStr;
+    }
+
+    if (len == 2) {
+        char tmp = result[0];
+        result[0] = result[1];
+        result[1] = tmp;
+        return result;
+    }
+
+    int n = len - 1;
+    int i, tmp;
+    for(i = 0; i <= (len / 2); i++) {
+        tmp = result[i];
+        result[i] = result[n];
+        result[n] = tmp;
+        n--;
+    }
+
+    return result;
+}
+
 int main()
 {
     int count;
@@ -74,10 +107,13 @@ int main()
 
     int eCount = 0;
 
+    bool isZero = false;
+
     while (num < 1)
     {
         num *= 10;
         eCount--;
+        isZero = true;
     }
     
 
@@ -87,7 +123,11 @@ int main()
         eCount++;
     }
 
-    //cout << "Num: " <<setprecision(10) << num << endl;
+    
+
+     //cout << "Num: " <<setprecision(10) << num << endl;
+    
+    string t = eString(21);
     double precision = 1;
 
     bool isFirst = true;
@@ -97,9 +137,10 @@ int main()
         if (isFirst == true) {
             result += intToString(digit) += ".";
             isFirst = false;
-        } else if (count < 0) {
+        } else if (count < 0 && isZero == false) {
+            //cout << "Num: " <<setprecision(10) << num << endl;
             eCount++;
-        } else {
+        } else if (count >= 0) {
             result += intToString(digit);
         }
 
@@ -108,14 +149,14 @@ int main()
         precision *= 0.1;
         count--;
         
-        cout << "N : " <<setprecision(20) << num << endl;
-        cout << "P : " << precision << endl;
+        //cout << "N : " <<setprecision(20) << num << endl;
+        //cout << "P : " << precision << endl;
 
-        if (num <= precision || num < 1e-10) {
+        if (num <= precision || num < 1e-20) {
             break;
         }
 
-        sleep(0.5);
+        //sleep(1);
     }
     
 
@@ -126,14 +167,16 @@ int main()
 
     if (eCount != 0) {
         result += "e";
-        if (isNegative == true) {
+        if (isZero == true) {
             result += "-";
+            eCount *= -1;
         } else {
             result += "+";
         }
-        //cout << "E : " << eCount << endl;
-        result += intToString(eCount);
+        //cout << "E : " << eCount << " " << eString(eCount) << endl;
+        result += eString(eCount);
     }
-
+    
+        
     cout << "Результат: " << result << endl;    
 }
