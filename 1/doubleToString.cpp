@@ -1,7 +1,17 @@
 #include <iostream>
 #include <sstream> 
+#include <unistd.h>
+#include <iomanip> 
 
 using namespace std;
+
+/*
+Составить программу перевода вещественного числа в форму
+константы с плавающей  точкой  в строковом формате. Целая часть
+мантиссы должна состоять из одной цифры в диапазоне  от 1 до 9.
+Исходное число имеет тип double, а преобразуется к типу string.
+Число знаков после десятичной точки задается (8).
+*/
 
 string intToString(int i) {
     switch(i) {
@@ -30,44 +40,6 @@ string intToString(int i) {
     }
 }
 
-int getNum(double *num, double *precision) 
-{
-    if (*num == *precision) {
-        return 1;
-    }
-
-    int steps = 0;
-    while (*num >= *precision) {
-        steps++;
-        *num -= *precision;
-    }
-
-    return steps;
-}
-
-int getWholePart(double *num, int *eCount, int *zeroes) {
-    while(*num >= 10) {
-        *num = *num / 10;
-        *eCount = *eCount + 1;
-    }
-
-    int steps = 0;
-    while(*num >= 1) {
-        steps++;
-        *num = *num - 1;
-    }
-
-    if (*eCount % 10 == 0) {
-        *zeroes *= 10;
-    } 
-
-    return steps;
-}
-
-int getDigit(int *num, int *precision) {
-    return *num / *precision;
-}
-
 int main()
 {
     int count;
@@ -82,6 +54,8 @@ int main()
     double num;   
     cout << "Введите число:\n";
     cin >> num;
+ 
+    //cout << "Num: " <<setprecision(10) << num << endl;
 
     if (num == 0) {
         cout << "Результат: ";
@@ -98,60 +72,68 @@ int main()
     
     string result = "";
 
-    if (isNegative == true) {
-        result += "-";
-    }
-
     int eCount = 0;
-    int zeroes = 1;
 
-    int wholePart = getWholePart(&num, &eCount, &zeroes);
-    result += intToString(wholePart);
-    result += ".";
-
-    double precision = 0.1;
+    while (num < 1)
+    {
+        num *= 10;
+        eCount--;
+    }
     
-    while (count != 0) {
-        int digit = getNum(&num, &precision);
-        result += intToString(digit);
-        precision = precision * 0.1;
-        count--;
+
+    while (num > 10)
+    {
+        num /= 10;
         eCount++;
-        if (eCount % 10 == 0) {
-            zeroes *= 10;
-        } 
     }
 
-    while (num > 0 && num >= precision) {
-        int digit = getNum(&num, &precision);
+    //cout << "Num: " <<setprecision(10) << num << endl;
+    double precision = 1;
 
-        precision = precision * 0.1;
-        eCount++;
+    bool isFirst = true;
 
-        if (eCount % 10 == 0) {
-            zeroes *= 10;
-        } 
-    }
-
-    result += "e+";
-
-    if (eCount < 10) {
-        result += intToString(eCount);
-    } else {
-        while (eCount > 0) {
-            if (eCount < 10) {
-                result += intToString(eCount);
-                break;
-            } else {
-                int digit = getDigit(&eCount, &zeroes);
-                eCount /= 10;
-                zeroes /= 10;
-                result += intToString(digit);
-            }
+    while (num > 0) {
+        int digit = num / precision;
+        if (isFirst == true) {
+            result += intToString(digit) += ".";
+            isFirst = false;
+        } else if (count < 0) {
+            eCount++;
+        } else {
+            result += intToString(digit);
         }
+
+        num -= digit * precision;
+       
+        precision *= 0.1;
+        count--;
+        
+        cout << "N : " <<setprecision(20) << num << endl;
+        cout << "P : " << precision << endl;
+
+        if (num <= precision || num < 1e-10) {
+            break;
+        }
+
+        sleep(0.5);
+    }
+    
+
+    while (count >= 0) {
+        result += "0";
+        count--;
     }
 
-    cout << "Результат: ";    
-    cout << result;
-    cout << "\n";
+    if (eCount != 0) {
+        result += "e";
+        if (isNegative == true) {
+            result += "-";
+        } else {
+            result += "+";
+        }
+        //cout << "E : " << eCount << endl;
+        result += intToString(eCount);
+    }
+
+    cout << "Результат: " << result << endl;    
 }
