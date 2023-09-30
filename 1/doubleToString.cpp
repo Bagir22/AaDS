@@ -1,6 +1,4 @@
 #include <iostream>
-#include <unistd.h>
-#include <iomanip> 
 
 using namespace std;
 
@@ -10,6 +8,9 @@ using namespace std;
 мантиссы должна состоять из одной цифры в диапазоне  от 1 до 9.
 Исходное число имеет тип double, а преобразуется к типу string.
 Число знаков после десятичной точки задается (8).
+
+Январев Данила ПС-22
+VS Code
 */
 
 string intToString(int i) {
@@ -88,8 +89,6 @@ int main()
     cout << "Введите число:\n";
     cin >> num;
  
-    //cout << "Num: " <<setprecision(10) << num << endl;
-
     if (num == 0) {
         cout << "Результат: ";
         cout << 0;
@@ -116,16 +115,11 @@ int main()
         isZero = true;
     }
     
-
     while (num > 10)
     {
         num /= 10;
         eCount++;
     }
-
-    
-
-     //cout << "Num: " <<setprecision(10) << num << endl;
     
     string t = eString(21);
     double precision = 1;
@@ -134,12 +128,10 @@ int main()
 
     while (num > 0) {
         int digit = num / precision;
+
         if (isFirst == true) {
             result += intToString(digit) += ".";
             isFirst = false;
-        } else if (count < 0 && isZero == false) {
-            //cout << "Num: " <<setprecision(10) << num << endl;
-            eCount++;
         } else if (count >= 0) {
             result += intToString(digit);
         }
@@ -148,15 +140,10 @@ int main()
        
         precision *= 0.1;
         count--;
-        
-        //cout << "N : " <<setprecision(20) << num << endl;
-        //cout << "P : " << precision << endl;
 
         if (num <= precision || num < 1e-20) {
             break;
         }
-
-        //sleep(1);
     }
     
 
@@ -173,10 +160,9 @@ int main()
         } else {
             result += "+";
         }
-        //cout << "E : " << eCount << " " << eString(eCount) << endl;
+
         result += eString(eCount);
     }
-    
-        
+         
     cout << "Результат: " << result << endl;    
 }
