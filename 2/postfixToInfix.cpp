@@ -62,6 +62,14 @@ bool isOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
 }
 
+bool  isAlphabet(char c) {
+    if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) {
+        return true;
+    }
+
+    return false;
+}
+
 string toInfix(string in) {
     if (in.length() == 0) {
         return "Ошибка: Пустая строка";
@@ -72,29 +80,30 @@ string toInfix(string in) {
     for (int i = 0; i < in.length(); i++) {
         char currentChar = in[i];
 
-        if (currentChar == '(' || currentChar == ')') {
-            return "Ошибка: Некорректный операнд";
-        } else if (isOperator(currentChar)) {
-            if (operandStack == nullptr || operandStack->next == nullptr) {
-                return "Ошибка: Недостаточно операндов.";
+        if (isAlphabet(currentChar) == true || isOperator(currentChar) == true) {
+            if (isOperator(currentChar)) {
+                if (operandStack == nullptr || operandStack->next == nullptr) {
+                    return "Ошибка: лишний операнд " + string(1, currentChar) + " на позиции " + to_string(i+1);
+                }
+
+                string operand2 = pop(operandStack);
+                string operand1 = pop(operandStack);
+
+                string expression = "(" + operand1 + currentChar + operand2 + ")";
+                push(operandStack, expression);
+            } else {
+                push(operandStack, string(1, currentChar));
             }
-
-            string operand2 = pop(operandStack);
-            string operand1 = pop(operandStack);
-
-            string expression = "(" + operand1 + currentChar + operand2 + ")";
-            push(operandStack, expression);
+        } else if (isAlphabet(currentChar) == false) {
+            return "Ошибка: некорректный операнд " + string(1, currentChar) + " на позиции " + to_string(i+1);
         } else {
-
-            push(operandStack, string(1, currentChar));
+            return "Ошибка: некорректный оператор " + string(1, currentChar) + " на позиции " + to_string(i+1);
         }
-        
-        //cout << "OS " << operandStack->key << " || " << *&operandStack->next <<  endl; 
     }
 
  
     if (operandStack == nullptr || operandStack->next != nullptr) {
-        return "Ошибка: Некорректная строка";
+        return "Ошибка: недостаточно операторов";
     }
 
     return operandStack->key;
@@ -149,46 +158,3 @@ int main() {
 
     return 0;
 }
-
-
-
-
-
-
-/*
-
-
-int main() {
-
-    cout << "Введите имя файла: ";
-    string inputFile;
-	cin >> inputFile;
-	cout << "\n";
-	char outputFile[] = "out.txt";
-
-    ifstream inFile(inputFile, ios_base::in);
-	ofstream outFile(outputFile, ios_base::app);
-	string line;
-
-    if (!inFile) {
-        cout << "Файл не открыт\n\n"; 
-        return -1;
-    }
-
-    
-
-	while (getline(inFile, line)) {
-        outFile << line << endl;
-	}
-
-    
-	inFile.close();
-	outFile.close();
-    
-    cin.ignore();
-    getchar();
-	
-	return 0;
-}
-
-*/
