@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <stack>
+#include <deque>
 
 using namespace std;
 
@@ -31,7 +32,7 @@ struct Tnode {
     int val;
     Tnode* left;
     Tnode* right;
-    bool ltag;
+    Tnode* next;  
     bool rtag;
     int lvl;
 };
@@ -41,12 +42,11 @@ void buildTree(const string& fileName, Tnode*& tree) {
     string line;
 
     if (!inFile) {
-        cout << "Файл не может быть открыт.\n";
+        cout << "File can't be open" << endl;
         return;
     }
 
     stack<Tnode*> nodeStack;
-    int currentLevel = 0;
 
     while (getline(inFile, line)) {
         if (line == "#") {
@@ -60,54 +60,135 @@ void buildTree(const string& fileName, Tnode*& tree) {
 
         int value = stoi(line.substr(level));
 
-        cout << "Val " << value << " Level " << level << endl;
-        
         Tnode* newNode = new Tnode;
         newNode->val = value;
-        newNode->ltag = false;
         newNode->rtag = false;
         newNode->left = nullptr;
         newNode->right = nullptr;
-        newNode->lvl = level;
 
-        while (currentLevel > level) {
-            nodeStack.pop();
-            currentLevel--;
-        }
-
-        if (!nodeStack.empty()) {
-            Tnode* parent = nodeStack.top();
-            if (!parent->left) {
-                parent->left = newNode;
-            } else {
-                parent->right = newNode;
-            }
+        if (nodeStack.empty()) {
+            tree = newNode;
         } else {
-            tree = newNode; 
+            Tnode* parent = nodeStack.top();
+            while (parent->lvl >= level && !nodeStack.empty()) {
+                nodeStack.pop();
+                if (!nodeStack.empty()) {
+                    parent = nodeStack.top();
+                }
+            }
+            if (parent->lvl < level) {
+                if (!parent->left) {
+                    parent->left = newNode;
+                } else {
+                    parent->right = newNode;
+                }
+            }
+
+            //cout << " Push " << value << " to parent " << parent->val << endl;
         }
 
+        newNode->lvl = level;
         nodeStack.push(newNode);
-        currentLevel = level;
     }
 
     inFile.close();
 }
 
-void preOrderPrint(const Tnode* node) {
-    if (node) {
-        cout << "|" << string(node->lvl * 2, '-'); 
-        cout << node->val << endl;
-        preOrderPrint(node->left);
-        preOrderPrint(node->right);
+void thravesalTree(Tnode* node, deque<Tnode*>& values) {
+    stack<Tnode*> nodeStack;
+    Tnode* current = node;
+
+    while (current || !nodeStack.empty()) {
+        while (current) {
+            values.push_back(current);
+            nodeStack.push(current);
+            current = current->left;
+        }
+
+        current = nodeStack.top();
+        nodeStack.pop();
+        current = current->right;
     }
 }
 
+void threadTree(deque<Tnode*>& values) {
+    while (!values.empty())
+    {
+        if (values.front()->left == nullptr && values.front()->right == nullptr) {
+            //cout <<  "Front " << values.front()->val << endl;
+            Tnode* parent = values.front();
+            values.pop_front();
+            if (!values.empty()) {
+                parent->next = values.front();
+                parent->rtag = true;
+            }            
+        } else {
+            values.pop_front();
+        }        
+    }    
+}
 
+void deleteTree(Tnode*& root) {
+    if (!root) {
+        return;
+    }
+
+    deleteTree(root->left);
+    deleteTree(root->right);
+    delete root;
+    root = nullptr;
+}
+
+void deleteByValue(Tnode*& node, int value, bool& isDeleted)
+{
+    if (node == nullptr || isDeleted) {
+        return;
+    }
+
+    if (node->val == value) {
+        isDeleted = true;
+        deleteTree(node);
+        return;
+    }
+
+    deleteByValue(node->right, value, isDeleted);
+    deleteByValue(node->left, value, isDeleted);
+}
+
+void deleteSubtree(Tnode *root, int value)
+{
+    bool isDeleted = false;
+
+    deleteByValue(root, value, isDeleted);
+}
+
+void printDefaultTree(const Tnode* node) {
+    if (node) {
+        cout << "|" << string(node->lvl * 2, '-'); 
+        cout << node->val;
+        cout << endl;
+        printDefaultTree(node->left);
+        printDefaultTree(node->right);
+    }
+}
+
+void printThreadedTree(const Tnode* node) {
+    if (node) {
+        cout << "|" << string(node->lvl * 2, '-'); 
+        cout << node->val;
+        if (node->rtag == true && node->next->val != 0) {
+            cout << " Next: " << node->next->val;
+        }
+        cout << endl;
+        printThreadedTree(node->left);
+        printThreadedTree(node->right);
+    }
+}
 
 int main() {
     char choice;
 
-    cout << "Введите имя файла: " << endl;
+    cout << "Input file name: " << endl;
     string inputFile;
 	cin >> inputFile;
     
@@ -116,9 +197,30 @@ int main() {
     
     while(true) {
         buildTree(inputFile, tree);
-        preOrderPrint(tree);
+        cout << "Default tree:" << endl;
+        printDefaultTree(tree);
+        cout << endl; 
 
-        cout << "Продолжить (Y/N)?";
+        deque<Tnode*> values;
+        thravesalTree(tree, values);
+        threadTree(values);
+
+        cout << "Threaded tree:" << endl;
+        printThreadedTree(tree);
+        cout << endl; 
+
+        int nodeToDelete;
+        cout << "Input node to delete:" << endl;
+        cin >> nodeToDelete;
+        deleteSubtree(tree, nodeToDelete);
+        deque<Tnode*> valuesWhileDelete;
+        thravesalTree(tree, valuesWhileDelete);
+        threadTree(valuesWhileDelete);
+        cout << "Threaded tree after deleteing:" << endl;
+        printThreadedTree(tree);
+        cout << endl; 
+
+        cout << "Continue (Y/N)?";
         cin >> choice;
 
         if (choice != 'Y' && choice != 'y') {
