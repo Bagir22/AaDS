@@ -37,8 +37,7 @@ struct Tnode {
     int lvl;
 };
 
-void buildTree(const string& fileName, Tnode*& tree) {
-    ifstream inFile(fileName);
+void buildTree(istream& inFile, Tnode*& tree) {
     string line;
 
     if (!inFile) {
@@ -90,11 +89,9 @@ void buildTree(const string& fileName, Tnode*& tree) {
         newNode->lvl = level;
         nodeStack.push(newNode);
     }
-
-    inFile.close();
 }
 
-void thravesalTree(Tnode* node, deque<Tnode*>& values) {
+void travesalTree(Tnode* node, deque<Tnode*>& values) {
     stack<Tnode*> nodeStack;
     Tnode* current = node;
 
@@ -129,7 +126,7 @@ void threadTree(deque<Tnode*>& values) {
 }
 
 void deleteTree(Tnode*& root) {
-    if (!root) {
+    if (root == nullptr) {
         return;
     }
 
@@ -155,33 +152,35 @@ void deleteByValue(Tnode*& node, int value, bool& isDeleted)
     deleteByValue(node->left, value, isDeleted);
 }
 
-void deleteSubtree(Tnode *root, int value)
+bool deleteSubtree(Tnode *root, int value)
 {
     bool isDeleted = false;
 
     deleteByValue(root, value, isDeleted);
+
+    return isDeleted;
 }
 
-void printDefaultTree(const Tnode* node) {
+void printDefaultTree(ostream& out, const Tnode* node) {
     if (node) {
-        cout << "|" << string(node->lvl * 2, '-'); 
-        cout << node->val;
-        cout << endl;
-        printDefaultTree(node->left);
-        printDefaultTree(node->right);
+        out << "|" << string(node->lvl * 2, '-'); 
+        out << node->val;
+        out << endl;
+        printDefaultTree(out, node->left);
+        printDefaultTree(out, node->right);
     }
 }
 
-void printThreadedTree(const Tnode* node) {
+void printThreadedTree(ostream& out, const Tnode* node) {
     if (node) {
-        cout << "|" << string(node->lvl * 2, '-'); 
-        cout << node->val;
-        if (node->rtag == true && node->next->val != 0) {
-            cout << " Next: " << node->next->val;
+        out << "|" << string(node->lvl * 2, '-'); 
+        out << node->val;
+        if (node->rtag && node->next->val != 0) {
+            out << " Next: " << node->next->val;
         }
-        cout << endl;
-        printThreadedTree(node->left);
-        printThreadedTree(node->right);
+        out << endl;
+        printThreadedTree(out, node->left);
+        printThreadedTree(out, node->right);
     }
 }
 
@@ -194,31 +193,44 @@ int main() {
     
     Tnode* tree = nullptr;
 
-    
+    ofstream outFile("out.txt", ios_base::out);
+    ifstream inFile(inputFile);
+    outFile.clear();
+
+    buildTree(inFile, tree);
+    inFile.close();
+    outFile << "Default tree:" << endl;
+    printDefaultTree(outFile, tree);
+    outFile << endl;
+
+    deque<Tnode*> values;
+    travesalTree(tree, values);
+    threadTree(values);
+
+    outFile << "Threaded tree:" << endl;
+    printThreadedTree(outFile, tree);
+    outFile << endl;
+
     while(true) {
-        buildTree(inputFile, tree);
-        cout << "Default tree:" << endl;
-        printDefaultTree(tree);
-        cout << endl; 
-
-        deque<Tnode*> values;
-        thravesalTree(tree, values);
-        threadTree(values);
-
-        cout << "Threaded tree:" << endl;
-        printThreadedTree(tree);
-        cout << endl; 
-
+        ofstream outFile("out.txt", ios_base::app);
         int nodeToDelete;
         cout << "Input node to delete:" << endl;
         cin >> nodeToDelete;
-        deleteSubtree(tree, nodeToDelete);
-        deque<Tnode*> valuesWhileDelete;
-        thravesalTree(tree, valuesWhileDelete);
-        threadTree(valuesWhileDelete);
-        cout << "Threaded tree after deleteing:" << endl;
-        printThreadedTree(tree);
-        cout << endl; 
+        outFile << "Node to delete " << nodeToDelete << endl;
+        bool isDeleted = deleteSubtree(tree, nodeToDelete);
+
+        if (isDeleted) {
+            deque<Tnode*> valuesWhileDelete;
+            travesalTree(tree, valuesWhileDelete);
+            threadTree(valuesWhileDelete);
+            outFile << "Threaded tree after deleting " << nodeToDelete << " node:" << endl;
+            printThreadedTree(outFile, tree);
+            outFile << endl; 
+        } else {
+            outFile << "No node found to delete" << endl;
+        }
+        
+        outFile.close();
 
         cout << "Continue (Y/N)?";
         cin >> choice;
