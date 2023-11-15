@@ -32,7 +32,8 @@ struct Tnode {
     int val;
     Tnode* left;
     Tnode* right;
-    Tnode* next;  
+    Tnode* next;
+    Tnode* parent;  
     bool rtag;
     int lvl;
 };
@@ -64,6 +65,7 @@ void buildTree(istream& inFile, Tnode*& tree) {
         newNode->rtag = false;
         newNode->left = nullptr;
         newNode->right = nullptr;
+        newNode->parent = nullptr;
 
         if (nodeStack.empty()) {
             tree = newNode;
@@ -81,6 +83,7 @@ void buildTree(istream& inFile, Tnode*& tree) {
                 } else {
                     parent->right = newNode;
                 }
+                 newNode->parent = parent;
             }
 
             //cout << " Push " << value << " to parent " << parent->val << endl;
@@ -144,6 +147,16 @@ void deleteByValue(Tnode*& node, int value, bool& isDeleted)
 
     if (node->val == value) {
         isDeleted = true;
+        if (node->rtag && node->next->val != 0) {
+            if (node->parent->left == nullptr) {
+                node->parent->next = node->next;
+                node->parent->rtag = true;
+            } else if (node->parent->left != nullptr) {
+                node->parent->left->next = node->next;
+                node->parent->left->rtag = true;
+            }
+        }
+        
         deleteTree(node);
         return;
     }
@@ -152,7 +165,7 @@ void deleteByValue(Tnode*& node, int value, bool& isDeleted)
     deleteByValue(node->left, value, isDeleted);
 }
 
-bool deleteSubtree(Tnode *root, int value)
+bool deleteSubtreeByValue(Tnode *root, int value)
 {
     bool isDeleted = false;
 
@@ -160,6 +173,8 @@ bool deleteSubtree(Tnode *root, int value)
 
     return isDeleted;
 }
+
+
 
 void printDefaultTree(ostream& out, const Tnode* node) {
     if (node) {
@@ -217,12 +232,9 @@ int main() {
         cout << "Input node to delete:" << endl;
         cin >> nodeToDelete;
         outFile << "Node to delete " << nodeToDelete << endl;
-        bool isDeleted = deleteSubtree(tree, nodeToDelete);
+        bool isDeleted = deleteSubtreeByValue(tree, nodeToDelete);
 
         if (isDeleted) {
-            deque<Tnode*> valuesWhileDelete;
-            travesalTree(tree, valuesWhileDelete);
-            threadTree(valuesWhileDelete);
             outFile << "Threaded tree after deleting " << nodeToDelete << " node:" << endl;
             printThreadedTree(outFile, tree);
             outFile << endl; 
