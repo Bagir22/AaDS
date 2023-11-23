@@ -1,9 +1,9 @@
 #include <fstream>
 #include <string> 
 #include <iostream>
-
 #include <stack>
 #include <deque>
+#include <map>
 
 using namespace std;
 
@@ -33,8 +33,8 @@ struct Tnode {
     Tnode* left;
     Tnode* right;
     Tnode* next;
+    Tnode* prev;
     Tnode* parent;  
-    bool rtag;
     int lvl;
 };
 
@@ -62,10 +62,11 @@ void buildTree(istream& inFile, Tnode*& tree) {
 
         Tnode* newNode = new Tnode;
         newNode->val = value;
-        newNode->rtag = false;
         newNode->left = nullptr;
         newNode->right = nullptr;
         newNode->parent = nullptr;
+        newNode->next = nullptr;
+        newNode->prev = nullptr;
 
         if (nodeStack.empty()) {
             tree = newNode;
@@ -83,10 +84,8 @@ void buildTree(istream& inFile, Tnode*& tree) {
                 } else {
                     parent->right = newNode;
                 }
-                 newNode->parent = parent;
+                newNode->parent = parent;
             }
-
-            //cout << " Push " << value << " to parent " << parent->val << endl;
         }
 
         newNode->lvl = level;
@@ -115,12 +114,11 @@ void threadTree(deque<Tnode*>& values) {
     while (!values.empty())
     {
         if (values.front()->left == nullptr && values.front()->right == nullptr) {
-            //cout <<  "Front " << values.front()->val << endl;
             Tnode* parent = values.front();
             values.pop_front();
             if (!values.empty()) {
                 parent->next = values.front();
-                parent->rtag = true;
+                parent->next->prev = parent;
             }            
         } else {
             values.pop_front();
@@ -147,17 +145,50 @@ void deleteByValue(Tnode*& node, int value, bool& isDeleted)
 
     if (node->val == value) {
         isDeleted = true;
-        if (node->rtag && node->next->val != 0) {
-            if (node->parent->left == nullptr) {
-                node->parent->next = node->next;
-                node->parent->rtag = true;
-            } else if (node->parent->left != nullptr) {
-                node->parent->left->next = node->next;
-                node->parent->left->rtag = true;
+
+        if (node->parent != nullptr) {
+            deque<Tnode*> subTreeValues;
+            travesalTree(node, subTreeValues);
+        
+            bool findLastNext = false;
+            bool lastNextNotInSubTree = false;
+            Tnode* lastNext;
+
+            while (subTreeValues.size() != 0) {
+                if (!findLastNext && subTreeValues.back()->next != nullptr) {
+                    findLastNext = true;
+                    lastNext = subTreeValues.back();
+                }
+
+                if (findLastNext && 
+                    (subTreeValues.back()->next != nullptr &&
+                    subTreeValues.back()->next == lastNext) || 
+                     subTreeValues.size() == 1 ) {
+                        lastNextNotInSubTree = true;
+                    }
+                subTreeValues.pop_back();    
+            }
+            
+            if (lastNextNotInSubTree && lastNext->next != nullptr) {
+                if  ((node->parent->left == nullptr && node->parent->right == nullptr) || 
+                    (node->parent->left != nullptr && node->parent->left->val == node->val)) {
+                    node->parent->next = lastNext->next;
+                    lastNext->next->prev = node->parent;
+                } else if (node->parent->right != nullptr 
+                        && node->parent->left != nullptr && 
+                        node->parent->right->val == node->val && 
+                        node->prev != nullptr) {
+                    node->prev->next = lastNext->next;
+                    lastNext->next->prev = node->prev->left;
+                } else if (lastNext->next == nullptr && lastNext->prev != nullptr) {
+                    lastNext->prev->next = nullptr;
+                }
             }
         }
         
+
         deleteTree(node);
+
         return;
     }
 
@@ -174,8 +205,6 @@ bool deleteSubtreeByValue(Tnode *root, int value)
     return isDeleted;
 }
 
-
-
 void printDefaultTree(ostream& out, const Tnode* node) {
     if (node) {
         out << "|" << string(node->lvl * 2, '-'); 
@@ -190,8 +219,11 @@ void printThreadedTree(ostream& out, const Tnode* node) {
     if (node) {
         out << "|" << string(node->lvl * 2, '-'); 
         out << node->val;
-        if (node->rtag && node->next->val != 0) {
+        if (node->next != nullptr &&  node->next->val != 0) {
             out << " Next: " << node->next->val;
+        }
+        if (node->prev != nullptr) {
+            out << " Prev: " << node->prev->val;
         }
         out << endl;
         printThreadedTree(out, node->left);
@@ -220,6 +252,7 @@ int main() {
 
     deque<Tnode*> values;
     travesalTree(tree, values);
+
     threadTree(values);
 
     outFile << "Threaded tree:" << endl;
