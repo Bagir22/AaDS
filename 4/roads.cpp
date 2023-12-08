@@ -17,6 +17,9 @@
     В. Лучшим считается путь,  имеющий в первую очередь наименьшую
     суммарную протяженность аварийноопасных,  а во  вторую очередь
     наименьшую длину (7).
+
+    Январев Данила ПС-22
+    CLion 2023.2.2
  */
 
 using namespace std;
@@ -79,7 +82,7 @@ void makeGraph(istream& inFile, Graph& g, int& readedLines) {
     }
 }
 
-void findAllPathsDFS(Graph& graph, int current, int destination, vector<Edge>& path, vector<vector<Edge>>& all_paths) {
+void findAllPathsDFS(Graph& graph, int current, int destination, vector<Edge>& path, vector<vector<Edge>>& allPaths) {
     for (const Edge& edge : graph.adjacencyList[current]) {
         int neighbor = edge.end;
 
@@ -87,9 +90,9 @@ void findAllPathsDFS(Graph& graph, int current, int destination, vector<Edge>& p
             path.push_back(edge);
 
             if (neighbor == destination) {
-                all_paths.push_back(path);
+                allPaths.push_back(path);
             } else {
-                findAllPathsDFS(graph, neighbor, destination, path, all_paths);
+                findAllPathsDFS(graph, neighbor, destination, path, allPaths);
             }
 
             path.pop_back();
@@ -99,65 +102,65 @@ void findAllPathsDFS(Graph& graph, int current, int destination, vector<Edge>& p
 
 vector<vector<Edge>> findAllPaths(Graph& graph, int start, int destination) {
     vector<Edge> path;
-    vector<vector<Edge>> all_paths;
-    findAllPathsDFS(graph, start, destination, path, all_paths);
-    return all_paths;
+    vector<vector<Edge>> allPaths;
+    findAllPathsDFS(graph, start, destination, path, allPaths);
+    return allPaths;
 }
 
 vector<vector<Edge>> findSafestShortestPaths(Graph& graph, int start, int destination) {
-    vector<vector<Edge>> all_paths = findAllPaths(graph, start, destination);
+    vector<vector<Edge>> allPaths = findAllPaths(graph, start, destination);
 
-    if (all_paths.empty()) {
-        return {};  // Нет путей
+    if (allPaths.empty()) {
+        return {};
     }
 
-    int min_danger_sum = INT_MAX;
-    for (const vector<Edge>& path : all_paths) {
-        int danger_sum = 0;
+    int minDangerSum = INT_MAX;
+    for (const vector<Edge>& path : allPaths) {
+        int dangerSum = 0;
         for (const Edge& edge : path) {
            if (edge.dangerous == 1) {
-               danger_sum += edge.weight;
+               dangerSum += edge.weight;
            }
         }
-        min_danger_sum = min(min_danger_sum, danger_sum);
+        minDangerSum = min(minDangerSum, dangerSum);
     }
 
-    vector<vector<Edge>> safest_paths;
-    for (const vector<Edge>& path : all_paths) {
-        int danger_sum = 0;
+    vector<vector<Edge>> safestPaths;
+    for (const vector<Edge>& path : allPaths) {
+        int dangerSum = 0;
         for (const Edge& edge : path) {
             if (edge.dangerous == 1) {
-                danger_sum += edge.weight;
+                dangerSum += edge.weight;
             }
         }
-        if (danger_sum == min_danger_sum) {
-            safest_paths.push_back(path);
+        if (dangerSum == minDangerSum) {
+            safestPaths.push_back(path);
         }
     }
 
     int min_length = INT_MAX;
-    int min_weight_sum = INT_MAX;
-    for (const vector<Edge>& path : safest_paths) {
-        int weight_sum = 0;
+    int minWeightSum = INT_MAX;
+    for (const vector<Edge>& path : safestPaths) {
+        int weightSum = 0;
         for (const Edge& edge : path) {
-            weight_sum += edge.weight;
+            weightSum += edge.weight;
         }
-        min_weight_sum = min(min_weight_sum, weight_sum);
+        minWeightSum = min(minWeightSum, weightSum);
     }
 
-    vector<vector<Edge>> safest_shortest_paths;
+    vector<vector<Edge>> safestShortestPaths;
 
-    for (const vector<Edge>& path : safest_paths) {
-        int weight_sum = 0;
+    for (const vector<Edge>& path : safestPaths) {
+        int weightSum = 0;
         for (const Edge& edge : path) {
-            weight_sum += edge.weight;
+            weightSum += edge.weight;
         }
-        if (weight_sum == min_weight_sum) {
-            safest_shortest_paths.push_back(path);
+        if (weightSum == minWeightSum) {
+            safestShortestPaths.push_back(path);
         }
     }
 
-    return safest_shortest_paths;
+    return safestShortestPaths;
 }
 
 int main() {
